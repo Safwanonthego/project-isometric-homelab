@@ -25,7 +25,8 @@ services:
       - traefik.http.services.vault.loadbalancer.server.port=8300
       - traefik.http.services.vault.loadbalancer.server.scheme=http
     healthcheck:
-      test: ["CMD", "vault", "status", "-address=http://127.0.0.1:8300"]
+      # test: ["CMD", "vault", "status", "-address=http://127.0.0.1:8300"]
+      test: ["CMD-SHELL", "vault status -address=http://127.0.0.1:8300 || [ $? -eq 2 ]"]
       interval: 30s
       timeout: 5s
       retries: 5
