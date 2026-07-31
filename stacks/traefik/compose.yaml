@@ -1,0 +1,70 @@
+services:
+  traefik:
+    container_name: traefik
+    image: traefik:v3.7
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - reverse_proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /opt/homelab/ssl/certs:/certs:ro
+      - /opt/homelab/data/traefik/dynamic:/dynamic:ro
+    command:
+      # EntryPoints - plain HTTP always redirects to HTTPS
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.web.http.redirections.entrypoint.permanent=true
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.websecure.http.tls=true
+
+      # Dynamic file provider - loads the cert/key registered in dynamic/tls.yaml
+      - --providers.file.filename=/dynamic/tls.yaml
+
+      # Docker provider
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=reverse_proxy
+
+      # API & Dashboard - insecure disabled, only reachable via the
+      # authenticated router defined in labels below
+      - --api.dashboard=true
+      - --api.insecure=false
+
+      # Observability
+      - --log.level=INFO
+      - --accesslog=true
+      - --metrics.prometheus=true
+    labels:
+      - traefik.enable=true
+
+      # Dashboard router, TLS + basic-auth protected
+      - traefik.http.routers.dashboard.rule=Host(`traefik.imetric.arpa`)
+      - traefik.http.routers.dashboard.entrypoints=websecure
+      - traefik.http.routers.dashboard.service=api@internal
+      - traefik.http.routers.dashboard.tls=true
+      - traefik.http.routers.dashboard.middlewares=dashboard-auth@docker
+
+      - traefik.http.middlewares.dashboard-auth.basicauth.users=cryztal:$$apr1$$CJUpvRVn$$iekWqiSB.2i/BnbZlIJB9/
+
+# Debugging
+  whoami:
+    image: traefik/whoami
+    container_name: whoami
+    restart: unless-stopped
+    networks:
+      - reverse_proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`whoami.imetric.arpa`)"
+      - "traefik.http.routers.whoami.entrypoints=websecure"
+      - "traefik.http.routers.whoami.tls=true"
+
+networks:
+  reverse_proxy:
+    external: true
