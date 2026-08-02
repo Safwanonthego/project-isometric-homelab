@@ -1,7 +1,7 @@
 services:
   traefik:
     container_name: traefik
-    image: traefik:v3.7
+    image: traefik:v3.7.10
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -23,8 +23,9 @@ services:
       - --entrypoints.websecure.address=:443
       - --entrypoints.websecure.http.tls=true
 
-      # Dynamic file provider - loads the cert/key registered in dynamic/tls.yaml
-      - --providers.file.filename=/dynamic/tls.yaml
+      # Dynamic directory provider - loads the files in the dir dynamicaly
+      - --providers.file.directory=/dynamic
+      - --providers.file.watch=true
 
       # Docker provider
       - --providers.docker=true
@@ -36,10 +37,27 @@ services:
       - --api.dashboard=true
       - --api.insecure=false
 
-      # Observability
+      # Health check endpoint
+      - --ping=true
+
+      # Observability logs & metrics
       - --log.level=INFO
       - --accesslog=true
+      - --accesslog.format=json
+      # - --accesslog.filters.statuscodes=400-599
+
       - --metrics.prometheus=true
+      - --entrypoints.metrics.address=:8082
+      - --metrics.prometheus.entrypoint=metrics
+      - --metrics.prometheus.addrouterslabels=true
+
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+
     labels:
       - traefik.enable=true
 
@@ -51,6 +69,12 @@ services:
       - traefik.http.routers.dashboard.middlewares=dashboard-auth@docker
 
       - traefik.http.middlewares.dashboard-auth.basicauth.users=cryztal:$$apr1$$CJUpvRVn$$iekWqiSB.2i/BnbZlIJB9/
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "25m"
+        max-file: "10"
 
 # Debugging
   whoami:
