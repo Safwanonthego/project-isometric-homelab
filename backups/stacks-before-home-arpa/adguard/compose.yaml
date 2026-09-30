@@ -13,7 +13,7 @@ services:
       - reverse_proxy
     labels:
       - traefik.enable=true
-      - traefik.http.routers.adguard.rule=Host(`adguard.home.arpa`)
+      - traefik.http.routers.adguard.rule=Host(`adguard.imetric.arpa`)
       - traefik.http.routers.adguard.entrypoints=websecure
       - traefik.http.routers.adguard.tls=true
       - traefik.http.services.adguard.loadbalancer.server.port=3000

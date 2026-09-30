@@ -2,3 +2,5 @@ secrets/
 imetric-cert/
 data/
 ssl/
+backups/
+data/traefik/dynamic/dashboard-auth.yaml

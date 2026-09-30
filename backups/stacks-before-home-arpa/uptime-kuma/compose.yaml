@@ -10,7 +10,7 @@ services:
       - monitoring
     labels:
       - traefik.enable=true
-      - traefik.http.routers.uptimekuma.rule=Host(`status.home.arpa`)
+      - traefik.http.routers.uptimekuma.rule=Host(`status.imetric.arpa`)
       - traefik.http.routers.uptimekuma.entrypoints=websecure
       - traefik.http.routers.uptimekuma.tls=true
       - traefik.http.services.uptimekuma.loadbalancer.server.port=3001

@@ -9,7 +9,7 @@ services:
       - IPC_LOCK
     environment:
       - VAULT_ADDR=http://127.0.0.1:8300
-      - VAULT_API_ADDR=https://vault.home.arpa
+      - VAULT_API_ADDR=https://vault.imetric.arpa
     volumes:
       - /opt/homelab/data/vault:/vault/file
       - /opt/homelab/configs/vault:/vault/config
@@ -18,7 +18,7 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=reverse_proxy
-      - traefik.http.routers.vault.rule=Host(`vault.home.arpa`)
+      - traefik.http.routers.vault.rule=Host(`vault.imetric.arpa`)
       - traefik.http.routers.vault.entrypoints=websecure
       - traefik.http.routers.vault.tls=true
       - traefik.http.services.vault.loadbalancer.server.port=8300

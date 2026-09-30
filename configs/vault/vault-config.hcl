@@ -9,5 +9,5 @@ listener "tcp" {
   tls_disable = true
 }
 
-api_addr     = "http://vault.imetric.arpa"
-# cluster_addr = "https://vault.imetric.arpa:8201"
+api_addr     = "https://vault.home.arpa"
+# cluster_addr = "https://vault.home.arpa:8201"
