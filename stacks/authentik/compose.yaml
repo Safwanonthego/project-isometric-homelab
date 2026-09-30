@@ -1,0 +1,73 @@
+services:
+  server:
+    container_name: authentik-server
+    image: ghcr.io/goauthentik/server:2026.8.3
+    command: server
+    restart: unless-stopped
+    shm_size: 512mb
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    secrets:
+      - authentik_db_password
+      - authentik_secret_key
+    environment:
+      AUTHENTIK_POSTGRESQL__HOST: postgres
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+      AUTHENTIK_POSTGRESQL__USER: authentik
+      AUTHENTIK_POSTGRESQL__PASSWORD: file:///run/secrets/authentik_db_password
+      AUTHENTIK_SECRET_KEY: file:///run/secrets/authentik_secret_key
+    volumes:
+      - /opt/homelab/data/authentik/data:/data
+      - /opt/homelab/data/authentik/templates:/templates
+    networks:
+      - internal
+      - reverse_proxy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=reverse_proxy
+      - traefik.http.routers.authentik.rule=Host(`auth.home.arpa`)
+      - traefik.http.routers.authentik.entrypoints=websecure
+      - traefik.http.routers.authentik.tls=true
+      - traefik.http.services.authentik.loadbalancer.server.port=9000
+
+  worker:
+    container_name: authentik-worker
+    image: ghcr.io/goauthentik/server:2026.8.3
+    command: worker
+    restart: unless-stopped
+    shm_size: 512mb
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    secrets:
+      - authentik_db_password
+      - authentik_secret_key
+    environment:
+      AUTHENTIK_POSTGRESQL__HOST: postgres
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+      AUTHENTIK_POSTGRESQL__USER: authentik
+      AUTHENTIK_POSTGRESQL__PASSWORD: file:///run/secrets/authentik_db_password
+      AUTHENTIK_SECRET_KEY: file:///run/secrets/authentik_secret_key
+    volumes:
+      - /opt/homelab/data/authentik/data:/data
+      - /opt/homelab/data/authentik/certs:/certs
+      - /opt/homelab/data/authentik/templates:/templates
+    networks:
+      - internal
+      # Worker has no internet access (internal network only). When you set up
+      # email or other outbound features, also add: reverse_proxy
+
+secrets:
+  authentik_db_password:
+    file: /opt/homelab/secrets/authentik_db_password
+  authentik_secret_key:
+    file: /opt/homelab/secrets/authentik_secret_key
+
+networks:
+  internal:
+    external: true
+  reverse_proxy:
+    external: true
