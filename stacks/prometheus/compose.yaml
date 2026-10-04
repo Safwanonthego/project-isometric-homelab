@@ -1,0 +1,53 @@
+services:
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:v3.15.0
+    restart: unless-stopped
+    mem_limit: 512m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=30d
+      - --storage.tsdb.retention.size=10GB
+    volumes:
+      - /opt/homelab/configs/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - /opt/homelab/data/prometheus:/prometheus
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=monitoring
+      - traefik.http.routers.prometheus.rule=Host(`prometheus.home.arpa`)
+      - traefik.http.routers.prometheus.entrypoints=websecure
+      - traefik.http.routers.prometheus.tls=true
+      - traefik.http.routers.prometheus.middlewares=authentik@file
+      - traefik.http.services.prometheus.loadbalancer.server.port=9090
+      - traefik.http.routers.prometheus-outpost.rule=Host(`prometheus.home.arpa`) && PathPrefix(`/outpost.goauthentik.io/`)
+      - traefik.http.routers.prometheus-outpost.entrypoints=websecure
+      - traefik.http.routers.prometheus-outpost.tls=true
+      - traefik.http.routers.prometheus-outpost.service=authentik@docker
+    networks:
+      - monitoring
+
+  node-exporter:
+    container_name: node-exporter
+    image: prom/node-exporter:v1.12.1
+    restart: unless-stopped
+    mem_limit: 128m
+    network_mode: host
+    pid: host
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    command:
+      - --path.rootfs=/host
+      - --web.listen-address=172.22.0.1:9100
+    volumes:
+      - /:/host:ro,rslave
+
+networks:
+  monitoring:
+    external: true
