@@ -4,9 +4,12 @@ services:
     hostname: portainer
     image: portainer/portainer-ce:2.44.0
     restart: unless-stopped
+    environment:
+      - SSL_CERT_FILE=/certs/ca-bundle.crt
     volumes:
       - /opt/homelab/data/portainer:/data
       - /var/run/docker.sock:/var/run/docker.sock
+      - /opt/homelab/ssl/certs/home-arpa/ca-bundle.crt:/certs/ca-bundle.crt:ro
     networks:
       - reverse_proxy
     labels:
